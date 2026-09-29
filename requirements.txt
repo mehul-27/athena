@@ -1,0 +1,43 @@
+# Athena — runtime dependencies (milestone 1: Chat, RAG Chat, Search).
+#
+# Deliberately NOT carrying Odysseus's email/calendar/coding/UI/legacy deps
+# (SQLAlchemy, caldav, icalendar, mcp, bcrypt, pyotp, psycopg2, youtube-transcript-api...).
+# See MIGRATION_AUDIT.md §13 for the reasoning.
+
+# --- Web layer ---
+fastapi
+uvicorn[standard]
+python-multipart
+
+# --- Config / HTTP ---
+python-dotenv
+httpx
+pydantic>=2
+pydantic-settings>=2
+
+# --- Security (provider API keys encrypted at rest) ---
+# Used by backend/security/secrets.py to keep provider keys out of plaintext on
+# disk. Athena still boots without it (keys are then stored unencrypted, with a
+# warning) so a missing optional dep never blocks startup.
+cryptography
+
+# --- RAG: extraction + vectors + embeddings ---
+pypdf
+numpy
+beautifulsoup4
+markdown
+nh3
+# `chromadb` is the embedded-capable client. Use it (not `chromadb-client`,
+# which is HTTP-only) so CHROMA_MODE=embedded works with no external service.
+chromadb
+fastembed
+
+# --- Calendar ---
+# Both are what Odysseus's calendar uses: `dateutil.rrule` for RRULE expansion
+# and `icalendar` for .ics import. (Export is generated directly, as Odysseus
+# does.) Atlassian-free, pure-python; pulled in only for the calendar feature.
+python-dateutil
+icalendar
+
+# --- Tests ---
+pytest
