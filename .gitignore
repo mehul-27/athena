@@ -6,3 +6,4 @@ __pycache__/
 data/
 documents/
 .pytest_cache/
+MIGRATION_AUDIT.md
