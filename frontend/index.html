@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#282c34" />
+  <link rel="icon" href="/static/favicon.svg" />
+  <title>Athena</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="appbar">
+    <div class="brand">
+      <span class="mark">◆</span>
+      <span class="name">ATHENA</span>
+    </div>
+
+    <nav class="topnav" role="tablist" aria-label="Primary">
+      <button class="tab is-active" role="tab" data-mode="chat" aria-selected="true">Chat</button>
+      <button class="tab tab-action" id="open-calendar" type="button">Calendar</button>
+      <button class="tab tab-action" id="open-theme" type="button">Theme</button>
+      <button class="tab tab-action" id="open-settings" type="button">Settings</button>
+      <button class="tab is-disabled" role="tab" data-mode="mcp" aria-selected="false" aria-disabled="true">
+        MCP<span class="soon">soon</span>
+      </button>
+    </nav>
+
+    <div class="status" id="status" title="backend status">
+      <span class="dot" id="status-dot"></span>
+      <span class="status-text" id="status-text">connecting…</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ─────────────── Chat (the single conversation interface) ─────────────── -->
+    <section class="panel is-active" id="panel-chat" role="tabpanel">
+      <div class="panel-head">
+        <div class="panel-head-row">
+          <div class="panel-head-text">
+            <h2>Chat</h2>
+            <p>One conversation. Turn on <strong>Web Search</strong> or <strong>RAG</strong>
+               below to ground answers in the web or in your documents.</p>
+          </div>
+          <div class="chat-head-actions">
+            <label class="mode-model">
+              <span>Model</span>
+              <select id="model-chat" data-mode="chat" aria-label="Chat model"></select>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-header" id="chat-header">
+        <button class="chat-title-btn" id="chat-title-btn" type="button"
+                aria-haspopup="true" aria-expanded="false" title="Chat actions">
+          <span class="chat-title" id="chat-title">New Chat</span>
+          <span class="chat-meta" id="chat-count"></span>
+          <span class="chat-meta chat-cost" id="chat-cost"></span>
+          <span class="chat-meta" id="chat-tokens"></span>
+          <span class="chat-caret" aria-hidden="true">▼</span>
+        </button>
+        <div class="chat-menu" id="chat-menu" role="menu" hidden>
+          <button type="button" role="menuitem" data-action="rename">Rename</button>
+          <button type="button" role="menuitem" data-action="compact">Compact</button>
+          <button type="button" role="menuitem" data-action="copy">Copy Chat</button>
+          <button type="button" role="menuitem" data-action="pdf">PDF</button>
+          <button type="button" role="menuitem" data-action="save">Save to Documents</button>
+          <button type="button" role="menuitem" data-action="delete" class="danger">Delete Chat</button>
+        </div>
+      </div>
+
+      <div class="chat-workspace" id="chat-workspace">
+        <div class="chat-pane">
+          <div class="stream" id="chat-stream"></div>
+
+          <div class="cap-bar" role="toolbar" aria-label="Chat capabilities">
+            <button class="cap-btn cap-add" type="button" disabled
+                    title="More capabilities are coming (MCP tools)">+</button>
+            <button class="cap-btn" type="button" id="cap-web_search" data-cap="web_search"
+                    aria-pressed="false">Web Search</button>
+            <button class="cap-btn" type="button" id="cap-rag" data-cap="rag"
+                    aria-pressed="false">RAG</button>
+            <button class="cap-btn cap-research" type="button" id="open-research"
+                    title="Start a multi-step Deep Research run">Deep Research</button>
+            <button class="cap-btn is-off" type="button" disabled
+                    title="MCP tools are not implemented yet">Tools<span class="soon">soon</span></button>
+          </div>
+
+          <form class="composer" id="chat-form">
+            <input id="chat-input" type="text" placeholder="Ask anything…" autocomplete="off" required />
+            <button type="button" id="chat-stop" class="btn-stop" hidden title="Stop generating">Stop</button>
+            <button type="submit" id="chat-send">Send</button>
+          </form>
+        </div>
+
+        <aside class="docs-panel" id="docs-panel" hidden aria-label="RAG documents">
+          <div class="docs-head">
+            <span class="docs-title">RAG Documents</span>
+            <button class="btn-ghost" id="docs-close" type="button" aria-label="Hide documents">×</button>
+          </div>
+          <label class="btn-upload" id="upload-label">
+            <input id="upload-input" type="file" accept="application/pdf,.pdf" hidden />
+            <span id="upload-label-text">Upload PDF</span>
+          </label>
+          <ul class="docs-list" id="docs-list"></ul>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ─────────────── MCP (placeholder) ─────────────── -->
+    <section class="panel" id="panel-mcp" role="tabpanel">
+      <div class="placeholder">
+        <div class="ph-mark">◈</div>
+        <h2>MCP</h2>
+        <p>MCP tool integration is not implemented yet. The client core is audited for a
+           later migration — see <code>MIGRATION_AUDIT.md</code>.</p>
+        <span class="pill">Coming soon</span>
+      </div>
+    </section>
+  </main>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <!-- ─────────────── Settings modal ─────────────── -->
+  <div class="modal-backdrop" id="settings-modal" hidden>
+    <div class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <header class="settings-modal-head">
+        <h2 id="settings-title">Settings</h2>
+        <span class="settings-modal-sub" id="settings-active-summary"></span>
+        <button class="modal-close" id="settings-close" type="button" aria-label="Close settings">×</button>
+      </header>
+      <div class="settings-modal-body">
+        <nav class="settings-nav" aria-label="Settings sections">
+          <input class="settings-find" id="settings-find" type="search"
+                 placeholder="Find settings…" aria-label="Find settings" autocomplete="off" />
+          <div class="settings-nav-items" id="settings-nav-items">
+            <button class="settings-nav-item" data-section="add-models" type="button">
+              <span class="nav-glyph">＋</span> Add Models
+            </button>
+            <button class="settings-nav-item" data-section="added-models" type="button">
+              <span class="nav-glyph">✓</span> Added Models
+            </button>
+            <button class="settings-nav-item" data-section="ai-defaults" type="button">
+              <span class="nav-glyph">◆</span> AI Defaults
+            </button>
+            <button class="settings-nav-item" data-section="library" type="button">
+              <span class="nav-glyph">▤</span> Library
+            </button>
+            <div class="settings-nav-group">Not implemented yet</div>
+            <button class="settings-nav-item is-off" type="button" disabled>
+              <span class="nav-glyph">⌕</span> Search
+            </button>
+            <button class="settings-nav-item is-off" type="button" disabled>
+              <span class="nav-glyph">✉</span> Integrations / Email
+            </button>
+            <button class="settings-nav-item is-off" type="button" disabled>
+              <span class="nav-glyph">◐</span> Appearance
+            </button>
+            <button class="settings-nav-item is-off" type="button" disabled>
+              <span class="nav-glyph">⌘</span> Shortcuts
+            </button>
+            <button class="settings-nav-item is-off" type="button" disabled>
+              <span class="nav-glyph">⛨</span> Account / Admin
+            </button>
+          </div>
+        </nav>
+        <section class="settings-pane" id="settings-pane" aria-live="polite"></section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── Theme modal ─────────────── -->
+  <div class="modal-backdrop" id="theme-modal" hidden>
+    <div class="theme-modal" role="dialog" aria-modal="true" aria-labelledby="theme-title">
+      <header class="settings-modal-head">
+        <h2 id="theme-title">Theme</h2>
+        <button class="modal-close" id="close-theme" type="button" aria-label="Close theme">×</button>
+      </header>
+      <div class="admin-tabs" id="theme-tabs">
+        <button class="admin-tab active" data-tab="browse" type="button">Themes</button>
+        <button class="admin-tab" data-tab="customize" type="button">Customize</button>
+      </div>
+      <div class="theme-tab-panel" id="theme-tab-browse">
+        <div class="admin-card">
+          <h2>Default Themes</h2>
+          <div class="theme-grid" id="themeGrid"></div>
+        </div>
+        <div class="admin-card" id="themeUserCard" hidden>
+          <h2>Your Themes</h2>
+          <div class="theme-grid" id="themeUserGrid"></div>
+        </div>
+      </div>
+      <div class="theme-tab-panel" id="theme-tab-customize" hidden></div>
+    </div>
+  </div>
+
+  <!-- ─────────────── Calendar modal ─────────────── -->
+  <div class="modal-backdrop" id="calendar-modal" hidden>
+    <div class="calendar-modal" role="dialog" aria-modal="true" aria-labelledby="cal-title">
+      <header class="settings-modal-head">
+        <h2 id="cal-title">Calendar</h2>
+        <button class="modal-close" id="close-calendar" type="button" aria-label="Close calendar">×</button>
+      </header>
+      <div class="cal-body" id="cal-body"></div>
+    </div>
+  </div>
+
+  <!-- ─────────────── Deep Research modal (launched from Chat) ─────────────── -->
+  <div class="modal-backdrop" id="research-modal" hidden>
+    <div class="research-modal" role="dialog" aria-modal="true" aria-labelledby="research-title">
+      <header class="settings-modal-head">
+        <h2 id="research-title">Deep Research</h2>
+        <span class="research-engine-chip">IterResearch · multi-round</span>
+        <label class="mode-model mode-model-inline">
+          <span>Model</span>
+          <select id="model-research" data-mode="research" aria-label="Research model"></select>
+        </label>
+        <button class="modal-close" id="close-research" type="button" aria-label="Close research">×</button>
+      </header>
+
+      <div class="research-workspace">
+        <aside class="research-rail">
+          <form class="research-launch" id="research-form">
+            <label class="research-label" for="research-query">Research question</label>
+            <textarea id="research-query" rows="4" maxlength="4000" required
+              placeholder="What would you like to investigate? Include enough detail to guide the research."></textarea>
+
+            <div class="research-options-head">Settings</div>
+            <div class="research-options">
+              <label>
+                <span>Research rounds</span>
+                <select id="research-rounds">
+                  <option value="">Auto (up to 20)</option>
+                  <option value="1">1 round</option>
+                  <option value="4">4 rounds</option>
+                  <option value="8">8 rounds</option>
+                  <option value="12">12 rounds</option>
+                  <option value="20">20 rounds</option>
+                </select>
+              </label>
+              <label>
+                <span>Report format</span>
+                <select id="research-category">
+                  <option value="">Auto detect</option>
+                  <option value="product">Product guide</option>
+                  <option value="comparison">Comparison</option>
+                  <option value="howto">How-to guide</option>
+                  <option value="factcheck">Fact check</option>
+                </select>
+              </label>
+              <label>
+                <span>Search provider</span>
+                <select id="research-provider">
+                  <option value="">Default chain</option>
+                  <option value="duckduckgo">DuckDuckGo</option>
+                  <option value="searxng">SearXNG</option>
+                  <option value="brave">Brave</option>
+                  <option value="tavily">Tavily</option>
+                  <option value="serper">Serper</option>
+                  <option value="google_pse">Google PSE</option>
+                </select>
+              </label>
+            </div>
+            <button type="submit" class="research-start" id="research-start">Start research</button>
+            <p class="settings-hint">Runs in the background — you can close this window; the result is posted
+              back into the conversation.</p>
+          </form>
+
+          <div class="research-library-head">
+            <span>Research jobs</span>
+            <button class="btn-ghost" id="research-refresh" type="button">Refresh</button>
+          </div>
+          <div class="research-jobs" id="research-jobs" aria-live="polite"></div>
+        </aside>
+
+        <section class="research-detail" id="research-detail" aria-live="polite">
+          <div class="research-empty" id="research-empty">
+            <span class="research-glyph">◈</span>
+            <h3>Research workspace</h3>
+            <p>Start an investigation to see its live progress, gathered sources, and synthesized report here.</p>
+          </div>
+          <div class="research-current" id="research-current" hidden></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/theme.js"></script>
+  <script src="/static/app.js"></script>
+  <script src="/static/chatHeader.js"></script>
+  <script src="/static/calendar.js"></script>
+  <script src="/static/models.js"></script>
+  <script src="/static/research.js"></script>
+  <script src="/static/settings.js"></script>
+</body>
+</html>
