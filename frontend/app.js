@@ -182,19 +182,146 @@ function pushNote(text, kind = "note") {
 
 function sourcesBlock(sources) {
   const wrap = el("div", "sources");
-  wrap.appendChild(el("h4", null, "Sources"));
-  const ul = el("ul");
-  sources.forEach((s) => {
-    const li = el("li");
-    li.appendChild(el("span", "src-name", s.filename || s.title || "document"));
-    const bits = [];
-    if (s.chunk_id !== undefined && s.chunk_id !== null) bits.push(`chunk ${s.chunk_id}`);
-    if (typeof s.score === "number") bits.push(`score ${s.score.toFixed(2)}`);
-    if (bits.length) li.appendChild(el("span", "src-meta", bits.join(" · ")));
-    ul.appendChild(li);
-  });
-  wrap.appendChild(ul);
+  const scored = sources.filter((source) => Number.isFinite(source.score));
+
+  if (scored.length) {
+    const heading = el("div", "relevance-heading");
+    heading.appendChild(el("h4", null, "Source relevance"));
+    heading.appendChild(el("span", "relevance-scale", "relative match · 0–1"));
+    wrap.appendChild(heading);
+
+    wrap.appendChild(relevanceSpiderChart(scored));
+    wrap.appendChild(el(
+      "p",
+      "relevance-note",
+      "Hybrid semantic and keyword match to the question; this is a relative score, not a probability."
+    ));
+  }
+
+  const unscored = sources.filter((source) => !Number.isFinite(source.score));
+  if (unscored.length) {
+    if (!scored.length) wrap.appendChild(el("h4", null, "Sources"));
+    const ul = el("ul");
+    unscored.forEach((source) => {
+      const li = el("li");
+      li.appendChild(el("span", "src-name", source.filename || source.title || "document"));
+      if (source.chunk_id !== undefined && source.chunk_id !== null) {
+        li.appendChild(el("span", "src-meta", `chunk ${source.chunk_id}`));
+      }
+      ul.appendChild(li);
+    });
+    wrap.appendChild(ul);
+  }
   return wrap;
+}
+
+function relevanceSpiderChart(sources) {
+  const NS = "http://www.w3.org/2000/svg";
+  const width = 420;
+  const height = 320;
+  const cx = 210;
+  const cy = 151;
+  const radius = 104;
+  // A radar polygon needs at least three axes. Empty axes remain at zero when
+  // only one or two chunks clear the threshold, making the sparse result clear.
+  const axisCount = Math.max(3, sources.length);
+  const values = Array.from({ length: axisCount }, (_, index) => (
+    index < sources.length ? Math.max(0, Math.min(1, Number(sources[index].score))) : 0
+  ));
+
+  const svgEl = (name, attrs = {}) => {
+    const node = document.createElementNS(NS, name);
+    Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, String(value)));
+    return node;
+  };
+  const pointAt = (index, scale = 1) => {
+    const angle = -Math.PI / 2 + (index * Math.PI * 2) / axisCount;
+    return [cx + Math.cos(angle) * radius * scale, cy + Math.sin(angle) * radius * scale];
+  };
+  const pointsAt = (scale) => Array.from({ length: axisCount }, (_, index) => (
+    pointAt(index, scale).map((n) => n.toFixed(1)).join(",")
+  )).join(" ");
+
+  const figure = el("figure", "relevance-spider");
+  const svg = svgEl("svg", {
+    viewBox: `0 0 ${width} ${height}`,
+    role: "img",
+    "aria-label": "Source relevance spiderweb",
+  });
+  const title = svgEl("title");
+  title.textContent = "Source relevance spiderweb";
+  svg.appendChild(title);
+  const desc = svgEl("desc");
+  desc.textContent = sources.map((source, index) => (
+    `S${index + 1}, ${source.filename || source.title || "document"}, score ${Number(source.score).toFixed(2)}`
+  )).join("; ");
+  svg.appendChild(desc);
+
+  [0.25, 0.5, 0.75, 1].forEach((level) => {
+    svg.appendChild(svgEl("polygon", {
+      class: level === 1 ? "spider-ring spider-ring-outer" : "spider-ring",
+      points: pointsAt(level),
+    }));
+    const [lx, ly] = pointAt(0, level);
+    const label = svgEl("text", { class: "spider-scale-label", x: lx + 4, y: ly + 3 });
+    label.textContent = level.toFixed(2);
+    svg.appendChild(label);
+  });
+
+  Array.from({ length: axisCount }, (_, index) => index).forEach((index) => {
+    const [x, y] = pointAt(index);
+    svg.appendChild(svgEl("line", { class: "spider-axis", x1: cx, y1: cy, x2: x, y2: y }));
+    if (index < sources.length) {
+      const [labelX, labelY] = pointAt(index, 1.18);
+      const label = svgEl("text", {
+        class: "spider-axis-label",
+        x: labelX,
+        y: labelY,
+        "text-anchor": labelX < cx - 8 ? "end" : (labelX > cx + 8 ? "start" : "middle"),
+      });
+      label.textContent = `S${index + 1}`;
+      svg.appendChild(label);
+    }
+  });
+
+  const dataPoints = values.map((value, index) => (
+    pointAt(index, value).map((n) => n.toFixed(1)).join(",")
+  )).join(" ");
+  svg.appendChild(svgEl("polygon", { class: "spider-data", points: dataPoints }));
+
+  values.forEach((value, index) => {
+    if (index >= sources.length) return;
+    const [x, y] = pointAt(index, value);
+    const dot = svgEl("circle", {
+      class: "spider-dot",
+      cx: x,
+      cy: y,
+      r: 4,
+      tabindex: 0,
+      "aria-label": `Source ${index + 1}, relevance ${value.toFixed(2)}`,
+    });
+    const tooltip = svgEl("title");
+    tooltip.textContent = `${sources[index].filename || sources[index].title || "document"} · ${value.toFixed(2)}`;
+    dot.appendChild(tooltip);
+    svg.appendChild(dot);
+  });
+  figure.appendChild(svg);
+
+  const legend = el("ol", "spider-legend");
+  sources.forEach((source, index) => {
+    const item = el("li");
+    item.appendChild(el("span", "spider-key", `S${index + 1}`));
+    const label = el("span", "spider-source", source.filename || source.title || "document");
+    label.title = source.filename || source.title || "document";
+    item.appendChild(label);
+    if (source.chunk_id !== undefined && source.chunk_id !== null) {
+      item.appendChild(el("span", "src-meta", `chunk ${source.chunk_id}`));
+    }
+    item.appendChild(el("strong", "spider-score", Number(source.score).toFixed(2)));
+    legend.appendChild(item);
+  });
+  figure.appendChild(legend);
+  return figure;
 }
 
 function webSourcesBlock(sources) {

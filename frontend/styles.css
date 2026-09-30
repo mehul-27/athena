@@ -300,6 +300,99 @@ main { position: relative; flex: 1 1 auto; display: flex; min-height: 0; overflo
 .sources .src-name { color: var(--accent-2); }
 .sources .src-meta { color: var(--muted); font-size: 10.5px; }
 
+.relevance-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.relevance-heading h4 { margin-bottom: 0; }
+.relevance-scale {
+  color: var(--muted);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.relevance-spider { margin: 0; }
+.relevance-spider svg {
+  display: block;
+  width: min(100%, 420px);
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+.spider-ring,
+.spider-axis {
+  fill: none;
+  stroke: color-mix(in srgb, var(--border) 78%, transparent);
+  stroke-width: 1;
+}
+.spider-ring-outer { stroke: color-mix(in srgb, var(--muted) 62%, transparent); }
+.spider-axis { stroke-dasharray: 2 4; }
+.spider-data {
+  fill: color-mix(in srgb, var(--accent) 22%, transparent);
+  stroke: var(--accent-2);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent-2) 25%, transparent));
+}
+.spider-dot {
+  fill: var(--bg);
+  stroke: var(--accent-2);
+  stroke-width: 2.5;
+}
+.spider-dot:focus { outline: none; stroke: var(--fg); stroke-width: 4; }
+.spider-scale-label {
+  fill: var(--muted);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.spider-axis-label {
+  fill: var(--accent-2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.spider-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 5px 14px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.spider-legend li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+.spider-key {
+  color: var(--accent-2);
+  font-size: 10px;
+  font-weight: 700;
+}
+.spider-source {
+  overflow: hidden;
+  color: var(--fg);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.spider-score {
+  color: var(--accent-2);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.relevance-note {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 9.5px;
+  line-height: 1.4;
+}
+
 /* typing indicator */
 .typing { display: inline-flex; align-items: center; gap: 5px; }
 .typing i {
