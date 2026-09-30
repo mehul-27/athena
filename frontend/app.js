@@ -400,6 +400,7 @@ async function send(message, capabilities = activeCapabilities()) {
     pending = null;
     setBusy(false);
     renderStream();
+    refreshConversationList();
   }
 }
 
@@ -612,6 +613,7 @@ async function loadConversation(id) {
   rememberConversation(data.conversation.id);
   setConversationSummary(data.conversation);
   renderStream();
+  refreshConversationList();
   return data.conversation;
 }
 
@@ -635,38 +637,91 @@ function startNewConversation() {
       total_tokens: 0, by_model: [],
     });
   }
+  refreshConversationList();
 }
 
-/* Exposed to chatHeader.js (header actions) and research.js (result refresh). */
+/* The left sidebar (conversations.js) owns its own rendering but re-runs itself
+   through here whenever a conversation is created, opened, renamed or removed. */
+function refreshConversationList() {
+  if (window.AthenaConversations && window.AthenaConversations.refresh) {
+    window.AthenaConversations.refresh();
+  }
+}
+
+function conversationPath(id, suffix = "") {
+  return `/api/conversations/${encodeURIComponent(id)}${suffix}`;
+}
+
+async function listConversations(limit = 100) {
+  const res = await api(`/api/conversations?limit=${encodeURIComponent(limit)}`);
+  return res.conversations || [];
+}
+
+/* The id-aware forms back the per-conversation sidebar menu; with no id they act
+   on the conversation currently open in the chat. */
+async function renameConversation(id, title) {
+  const target = id || conversationId;
+  if (!target) throw new Error("no conversation");
+  const res = await send2(conversationPath(target), "PATCH", { title });
+  if (target === conversationId) setConversationSummary(res.conversation);
+  refreshConversationList();
+  return res.conversation;
+}
+
+async function compactConversation(id) {
+  const target = id || conversationId;
+  if (!target) throw new Error("no conversation");
+  const res = await send2(conversationPath(target, "/compact"), "POST", {});
+  if (target === conversationId) {
+    setConversationSummary(res.conversation);
+    await refreshConversation();
+  }
+  refreshConversationList();
+  return res;
+}
+
+async function transcriptOf(id) {
+  const target = id || conversationId;
+  if (!target) throw new Error("no conversation");
+  const res = await fetch(conversationPath(target, "/transcript"), { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.text();
+}
+
+async function saveConversation(id) {
+  const target = id || conversationId;
+  if (!target) throw new Error("no conversation");
+  const res = await send2(conversationPath(target, "/save"), "POST", {});
+  return res.document;
+}
+
+async function deleteConversationById(id) {
+  const target = id || conversationId;
+  if (!target) return;
+  await send2(conversationPath(target), "DELETE");
+  if (target === conversationId) startNewConversation();
+  refreshConversationList();
+}
+
+/* Exposed to chatHeader.js (header actions), conversations.js (sidebar) and
+   research.js (result refresh). The no-argument forms act on the current chat. */
 window.AthenaChat = {
   getConversationId: () => conversationId,
   getConversation: () => conversationSummary,
   refresh: refreshConversation,
   startNewConversation,
-  async rename(title) {
-    const res = await send2(`/api/conversations/${encodeURIComponent(conversationId)}`, "PATCH", { title });
-    setConversationSummary(res.conversation);
-    return res.conversation;
-  },
-  async compact() {
-    const res = await send2(`/api/conversations/${encodeURIComponent(conversationId)}/compact`, "POST", {});
-    setConversationSummary(res.conversation);
-    await refreshConversation();
-    return res;
-  },
-  async transcript() {
-    const res = await fetch(`/api/conversations/${encodeURIComponent(conversationId)}/transcript`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.text();
-  },
-  async saveDocument() {
-    const res = await send2(`/api/conversations/${encodeURIComponent(conversationId)}/save`, "POST", {});
-    return res.document;
-  },
-  async deleteConversation() {
-    if (!conversationId) return;
-    await send2(`/api/conversations/${encodeURIComponent(conversationId)}`, "DELETE");
-  },
+  list: listConversations,
+  open: (id) => loadConversation(id),
+  renameConversation,
+  compactConversation,
+  transcriptOf,
+  saveConversation,
+  deleteConversationById,
+  rename: (title) => renameConversation(conversationId, title),
+  compact: () => compactConversation(conversationId),
+  transcript: () => transcriptOf(conversationId),
+  saveDocument: () => saveConversation(conversationId),
+  deleteConversation: () => deleteConversationById(conversationId),
 };
 
 async function send2(path, method, body) {

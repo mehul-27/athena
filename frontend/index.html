@@ -7,14 +7,12 @@
   <meta name="theme-color" content="#282c34" />
   <link rel="icon" href="/static/favicon.svg" />
   <title>Athena</title>
-  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="stylesheet" href="/static/styles.css?v=2" />
 </head>
 <body>
   <header class="appbar">
-    <div class="brand">
-      <span class="mark">◆</span>
-      <span class="name">ATHENA</span>
-    </div>
+    <button class="sidebar-toggle" id="sidebar-toggle" type="button"
+            aria-label="Toggle chat list" aria-expanded="true">☰</button>
 
     <nav class="topnav" role="tablist" aria-label="Primary">
       <button class="tab is-active" role="tab" data-mode="chat" aria-selected="true">Chat</button>
@@ -33,6 +31,17 @@
   </header>
 
   <main>
+    <!-- ─────────────── Left sidebar: persistent chat history ─────────────── -->
+    <aside class="sidebar" id="sidebar" aria-label="Conversations">
+      <div class="sidebar-brand">
+        <img class="sidebar-logo" src="/static/athenalogo.svg" alt="Athena" />
+        <span class="sidebar-wordmark">ATHENA</span>
+      </div>
+      <button class="btn btn-new-chat" id="new-chat" type="button">+ New Chat</button>
+      <div class="sidebar-label">Chats</div>
+      <nav class="conv-list" id="conv-list" aria-label="Chat history"></nav>
+    </aside>
+
     <!-- ─────────────── Chat (the single conversation interface) ─────────────── -->
     <section class="panel is-active" id="panel-chat" role="tabpanel">
       <div class="panel-head">
@@ -70,41 +79,41 @@
         </div>
       </div>
 
-      <div class="chat-workspace" id="chat-workspace">
-        <div class="chat-pane">
+      <div class="chat-pane">
+        <div class="chat-workspace" id="chat-workspace">
           <div class="stream" id="chat-stream"></div>
 
-          <div class="cap-bar" role="toolbar" aria-label="Chat capabilities">
-            <button class="cap-btn cap-add" type="button" disabled
-                    title="More capabilities are coming (MCP tools)">+</button>
-            <button class="cap-btn" type="button" id="cap-web_search" data-cap="web_search"
-                    aria-pressed="false">Web Search</button>
-            <button class="cap-btn" type="button" id="cap-rag" data-cap="rag"
-                    aria-pressed="false">RAG</button>
-            <button class="cap-btn cap-research" type="button" id="open-research"
-                    title="Start a multi-step Deep Research run">Deep Research</button>
-            <button class="cap-btn is-off" type="button" disabled
-                    title="MCP tools are not implemented yet">Tools<span class="soon">soon</span></button>
-          </div>
-
-          <form class="composer" id="chat-form">
-            <input id="chat-input" type="text" placeholder="Ask anything…" autocomplete="off" required />
-            <button type="button" id="chat-stop" class="btn-stop" hidden title="Stop generating">Stop</button>
-            <button type="submit" id="chat-send">Send</button>
-          </form>
+          <aside class="context-panel" id="docs-panel" hidden aria-label="RAG documents">
+            <div class="docs-head">
+              <span class="docs-title">RAG Documents</span>
+              <button class="btn-ghost" id="docs-close" type="button" aria-label="Hide documents">×</button>
+            </div>
+            <label class="btn-upload" id="upload-label">
+              <input id="upload-input" type="file" accept="application/pdf,.pdf" hidden />
+              <span id="upload-label-text">Upload PDF</span>
+            </label>
+            <ul class="docs-list" id="docs-list"></ul>
+          </aside>
         </div>
 
-        <aside class="docs-panel" id="docs-panel" hidden aria-label="RAG documents">
-          <div class="docs-head">
-            <span class="docs-title">RAG Documents</span>
-            <button class="btn-ghost" id="docs-close" type="button" aria-label="Hide documents">×</button>
-          </div>
-          <label class="btn-upload" id="upload-label">
-            <input id="upload-input" type="file" accept="application/pdf,.pdf" hidden />
-            <span id="upload-label-text">Upload PDF</span>
-          </label>
-          <ul class="docs-list" id="docs-list"></ul>
-        </aside>
+        <div class="cap-bar" role="toolbar" aria-label="Chat capabilities">
+          <button class="cap-btn cap-add" type="button" disabled
+                  title="More capabilities are coming (MCP tools)">+</button>
+          <button class="cap-btn" type="button" id="cap-web_search" data-cap="web_search"
+                  aria-pressed="false">Web Search</button>
+          <button class="cap-btn" type="button" id="cap-rag" data-cap="rag"
+                  aria-pressed="false">RAG</button>
+          <button class="cap-btn cap-research" type="button" id="open-research"
+                  title="Start a multi-step Deep Research run">Deep Research</button>
+          <button class="cap-btn is-off" type="button" disabled
+                  title="MCP tools are not implemented yet">Tools<span class="soon">soon</span></button>
+        </div>
+
+        <form class="composer" id="chat-form">
+          <input id="chat-input" type="text" placeholder="Ask anything…" autocomplete="off" required />
+          <button type="button" id="chat-stop" class="btn-stop" hidden title="Stop generating">Stop</button>
+          <button type="submit" id="chat-send">Send</button>
+        </form>
       </div>
     </section>
 
@@ -286,12 +295,13 @@
     </div>
   </div>
 
-  <script src="/static/theme.js"></script>
-  <script src="/static/app.js"></script>
-  <script src="/static/chatHeader.js"></script>
-  <script src="/static/calendar.js"></script>
-  <script src="/static/models.js"></script>
-  <script src="/static/research.js"></script>
-  <script src="/static/settings.js"></script>
+  <script src="/static/theme.js?v=2"></script>
+  <script src="/static/app.js?v=2"></script>
+  <script src="/static/chatHeader.js?v=2"></script>
+  <script src="/static/conversations.js?v=2"></script>
+  <script src="/static/calendar.js?v=2"></script>
+  <script src="/static/models.js?v=2"></script>
+  <script src="/static/research.js?v=2"></script>
+  <script src="/static/settings.js?v=2"></script>
 </body>
 </html>

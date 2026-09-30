@@ -52,7 +52,7 @@ def create_app(
     llm = llm or build_llm_router(settings, registry=registry)
     conversation_store = ConversationStore(settings)
 
-    app = FastAPI(title=settings.app_name, version="0.1.0")
+    app = FastAPI(title=settings.app_name, version="0.2.0")
     app.state.settings = settings
     app.state.rag_engine = engine
     app.state.document_service = document_service

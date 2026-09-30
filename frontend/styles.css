@@ -65,14 +65,24 @@ body {
   flex: 0 0 auto;
 }
 
-.brand { display: flex; align-items: center; gap: 9px; flex: 0 0 auto; }
-.brand .mark { color: var(--accent); font-size: 15px; }
-.brand .name {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  color: var(--fg);
+/* Only needed when the chat list collapses to an overlay (narrow viewports). */
+.sidebar-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  padding: 6px 9px;
+  cursor: pointer;
+  transition: color 0.14s, background 0.14s;
 }
+.sidebar-toggle:hover { color: var(--fg); background: rgba(255, 255, 255, 0.03); }
 
 .topnav {
   display: flex;
@@ -142,7 +152,7 @@ body {
 .status-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ══════════════════ Panels ══════════════════ */
-main { flex: 1 1 auto; display: flex; min-height: 0; overflow: hidden; }
+main { position: relative; flex: 1 1 auto; display: flex; min-height: 0; overflow: hidden; }
 
 .panel {
   display: none;
@@ -340,24 +350,177 @@ main { flex: 1 1 auto; display: flex; min-height: 0; overflow: hidden; }
 .composer button:hover:not(:disabled) { filter: brightness(1.1); }
 .composer button:disabled { opacity: 0.5; cursor: default; }
 
-/* ══════════════════ RAG workspace: documents sidebar + chat ══════════════════ */
-.rag-workspace {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  gap: 14px;
-}
-
-.docs-sidebar {
-  flex: 0 0 250px;
+/* ══════════════════ Left sidebar: persistent chat history ══════════════════ */
+.sidebar {
+  flex: 0 0 220px;
+  width: 220px;
+  min-width: 220px;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: var(--card);
-  border: 1px solid var(--border-strong);
-  border-radius: 12px;
-  padding: 12px;
+  padding: 18px 12px;
+  border-right: 1px solid var(--border);
+  background: transparent;
 }
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 2px 6px 18px;
+  flex: 0 0 auto;
+}
+.sidebar-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+.sidebar-wordmark {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Shared button base — same tokens as .btn-sm / .btn-ghost. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--panel-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: color 0.14s, border-color 0.14s, background 0.14s;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent-2); }
+
+.btn-new-chat {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 18px;
+  flex: 0 0 auto;
+}
+
+.sidebar-label {
+  flex: 0 0 auto;
+  padding: 0 7px 8px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.conv-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 2px;
+}
+.conv-list .state { padding: 6px; color: var(--muted); font-size: 11.5px; }
+
+.conv-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 6px;
+  padding-right: 2px;
+}
+.conv-row:hover { background: rgba(255, 255, 255, 0.03); }
+.conv-row.is-active { background: var(--panel-2); box-shadow: inset 2px 0 var(--accent); }
+
+.conv-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--fg-dim);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.4;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+.conv-row:hover .conv-title, .conv-row.is-active .conv-title { color: var(--fg); }
+.conv-title-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.conv-menu-btn {
+  flex: 0 0 auto;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 7px;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.12s, color 0.12s, background 0.12s;
+}
+.conv-row:hover .conv-menu-btn,
+.conv-row.is-active .conv-menu-btn,
+.conv-row:focus-within .conv-menu-btn,
+.conv-menu-btn[aria-expanded="true"] { opacity: 1; }
+.conv-menu-btn:hover { color: var(--fg); background: rgba(255, 255, 255, 0.05); }
+
+.conv-menu {
+  position: absolute;
+  top: calc(100% + 3px);
+  right: 0;
+  z-index: 40;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+}
+.conv-menu[hidden] { display: none; }
+.conv-menu button {
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--fg-dim);
+  font: inherit;
+  font-size: 12px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+.conv-menu button:hover { background: var(--panel-2); color: var(--fg); }
+.conv-menu button.danger { color: var(--red); }
+.conv-menu button.danger:hover { background: #241a1d; }
+
+.conv-rename-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 2px 4px;
+  background: var(--panel-2);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 8px;
+}
+.conv-rename-input:focus { outline: none; box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.12); }
 
 .chat-pane {
   flex: 1 1 auto;
@@ -370,13 +533,16 @@ main { flex: 1 1 auto; display: flex; min-height: 0; overflow: hidden; }
 /* ══════════════════ Chat capabilities (Web Search / RAG) ══════════════════ */
 .chat-head-actions { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
 
-/* The chat column + its contextual RAG panel. */
+/* The message area. It is the positioning context for the contextual drawer,
+   which overlays it and never takes part in layout. */
 .chat-workspace {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  gap: 14px;
   position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .cap-bar {
@@ -461,33 +627,36 @@ main { flex: 1 1 auto; display: flex; min-height: 0; overflow: hidden; }
   box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.12);
 }
 
-/* RAG documents: a contextual side panel that appears only while RAG is on. */
-.docs-panel {
-  flex: 0 0 250px;
+/* Contextual right drawer (RAG documents). Absolutely positioned inside
+   .chat-workspace, so it never takes part in layout: opening or closing it cannot
+   move, resize or reposition the chat or its composer. */
+.context-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+
+  width: 320px;
+  max-width: calc(100% - 24px);
+
+  z-index: 50;
+
   display: flex;
   flex-direction: column;
-  min-height: 0;
+
   background: var(--card);
   border: 1px solid var(--border-strong);
   border-radius: 12px;
-  padding: 12px;
-}
-.docs-panel[hidden] { display: none; }
 
-/* Narrow screens: the RAG panel becomes a drawer instead of squeezing the chat. */
-@media (max-width: 860px) {
-  .docs-panel {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: min(320px, 86%);
-    z-index: 30;
-    box-shadow: -18px 0 40px rgba(0, 0, 0, 0.5);
-    overflow-y: auto;
-  }
-  .chat-head-actions { flex-direction: column; align-items: flex-end; gap: 6px; }
+  padding: 12px;
+
+  box-shadow: -18px 0 40px rgba(0, 0, 0, 0.35);
+
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.16s ease, transform 0.16s ease;
 }
+.context-panel[hidden] { display: none; }
 
 .docs-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .docs-title {
@@ -722,12 +891,24 @@ main { flex: 1 1 auto; display: flex; min-height: 0; overflow: hidden; }
 @media (max-width: 900px) {
   .status-text { display: none; }
   .panel { padding: 14px 16px 16px; }
+
+  /* The chat list becomes an overlay drawer instead of squeezing the chat. */
+  .sidebar-toggle { display: inline-flex; }
+  .sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(260px, 86%);
+    min-width: 0;
+    z-index: 35;
+    display: none;
+    background: var(--panel);
+    box-shadow: 18px 0 40px rgba(0, 0, 0, 0.5);
+  }
+  body.sidebar-open .sidebar { display: flex; }
 }
 @media (max-width: 860px) {
-  /* Sidebar becomes a short strip above the chat so neither is squeezed. */
-  .rag-workspace { flex-direction: column; }
-  .docs-sidebar { flex: 0 0 auto; }
-  .docs-sidebar .docs-list { flex: 0 1 auto; max-height: 150px; }
   .research-workspace { grid-template-columns: 1fr; grid-template-rows: minmax(220px, 42%) minmax(0, 1fr); }
   .research-rail { min-height: 0; }
   .research-launch { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, .7fr); gap: 8px 12px; }
@@ -750,7 +931,6 @@ main { flex: 1 1 auto; display: flex; min-height: 0; overflow: hidden; }
 }
 @media (max-width: 720px) {
   .appbar { gap: 12px; padding: 0 12px; }
-  .brand .name { display: none; }
   .tab { padding: 0 10px; font-size: 12px; }
   .soon { display: none; }
 }
