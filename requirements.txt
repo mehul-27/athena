@@ -1,7 +1,7 @@
 # Athena — runtime dependencies (milestone 1: Chat, RAG Chat, Search).
 #
-# Deliberately NOT carrying Odysseus's email/calendar/coding/UI/legacy deps
-# (SQLAlchemy, caldav, icalendar, mcp, bcrypt, pyotp, psycopg2, youtube-transcript-api...).
+# Deliberately NOT carrying Odysseus's email/UI/legacy deps
+# (SQLAlchemy, caldav, bcrypt, pyotp, psycopg2, youtube-transcript-api...).
 # See MIGRATION_AUDIT.md §13 for the reasoning.
 
 # --- Web layer ---
@@ -31,6 +31,13 @@ nh3
 # which is HTTP-only) so CHROMA_MODE=embedded works with no external service.
 chromadb
 fastembed
+
+# --- MCP (Model Context Protocol) ---
+# Client side of MCP: the transports (stdio / SSE / streamable HTTP) used to
+# connect to user-configured MCP servers. Pinned to the maintained v1 line, the
+# same pin Odysseus uses — v1 is what MCP servers in the wild are built against
+# and the SDK's v2 is a breaking rewrite.
+mcp<2
 
 # --- Calendar ---
 # Both are what Odysseus's calendar uses: `dateutil.rrule` for RRULE expansion

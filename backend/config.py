@@ -159,6 +159,23 @@ class Settings(BaseSettings):
     research_fast_model: str = ""
     research_strong_model: str = ""
 
+    # --- MCP (Model Context Protocol) ---
+    # Athena ships no bundled MCP server: the user adds their own (stdio, SSE or
+    # streamable HTTP) in Settings, and this is the master switch. `ATHENA_MCP=0`
+    # turns the whole subsystem off — no connections, no schemas, no tools.
+    mcp_enabled: bool = True
+    # Odysseus uses 20s for a per-server connect; kept identical so a slow stdio
+    # server behaves the same way here.
+    mcp_connect_timeout: float = 20.0
+    # Tool-use budget for one chat message. Odysseus allows 50 rounds; a chat
+    # message that needs more than a handful is a runaway, and every round is a
+    # real (often metered) LLM call.
+    tools_max_rounds: int = 6
+    tools_max_calls: int = 12
+    # A tool result is fed back to the model, so it is capped the way Odysseus
+    # caps formatted tool output.
+    tools_result_max_chars: int = 8000
+
     # --- Tests ---
     athena_e2e: int = 0
 
